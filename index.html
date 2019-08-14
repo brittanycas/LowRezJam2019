@@ -3,10 +3,19 @@
   <head>
       <meta charset="UTF-8" />
       <title>Dungeon Adventure</title>
-      <script src="//cdn.jsdelivr.net/npm/phaser@3.19.0/dist/phaser.js"></script>
       <link href="./style.css" type="text/css" rel="stylesheet">
+      <script src="//cdn.jsdelivr.net/npm/phaser@3.19.0/dist/phaser.js"></script>
   </head>
   <body>
+
+    <header>
+      <h1>Dungeon Adventure</h1>
+      <h4>Game Controls</h4>
+      <p>Left and Right Arrows to Move</p>
+      <p>Up Arrow to Jump</p>
+      <p>Space to Throw Pickaxe</p>
+    </header>
+
     <div id="game_window">
       <script type="text/javascript">
         var gameWidth = 64;
@@ -17,7 +26,7 @@
             type: Phaser.AUTO,
             scale: {
               mode: Phaser.Scale.FIT,
-              autoCenter: Phaser.Scale.CENTER_BOTH,
+              autoCenter: Phaser.Scale.CENTER_HORIZONTALLY,
               width: gameWidth,
               height: gameHeight,
               min: {
@@ -53,9 +62,10 @@
           this.load.image('ground-sm', 'assets/platform-sm.png')
           this.load.image('platform', 'assets/platform1.png');
           this.load.image('goal-platform', 'assets/platform-goal.png')
-          this.load.image('lava', 'assets/lava.png');
           this.load.image('lava-md', 'assets/lava-md.png');
           this.load.image('lava-lg', 'assets/lava-lg.png');
+          this.load.image('flag', 'assets/flag.png');
+          this.load.image('pick', 'assets/pick.png');
           this.load.spritesheet('dude',
               'assets/testsprite.png',
               { frameWidth: 10, frameHeight: 12 }
@@ -73,8 +83,8 @@
 
             //load in lava traps
             lavaTrap = this.physics.add.staticGroup();
-            lavaTrap.create(97, 62, 'lava');
-            lavaTrap.create(126, 62, 'lava');
+            lavaTrap.create(97, 62, 'lava-md');
+            lavaTrap.create(126, 62, 'lava-md');
             lavaTrap.create(208, 62, 'lava-lg');
             lavaTrap.create(280, 62, 'lava-md');
             lavaTrap.create(310, 62, 'lava-md');
@@ -85,21 +95,26 @@
             //load in static ground
             ground = this.physics.add.staticGroup();
             ground.create(43, 62, 'ground');
-            ground.create(112, 62, 'ground-sm');
-            ground.create(140, 62, 'ground-sm');
+            ground.create(114, 62, 'ground-sm');
+            ground.create(145, 62, 'ground-sm');
             ground.create(150, 62, 'ground-sm');
             ground.create(264, 62, 'ground-sm');
-            ground.create(296, 62, 'ground-sm');
+            ground.create(294, 62, 'ground-sm');
             ground.create(324, 62, 'ground-sm');
-            ground.create(362, 62, 'goal-platform');
+            ground.create(364, 62, 'goal-platform');
 
             //load floating platforms
             ground.create(85, 56, 'platform');
             ground.create(174, 54, 'platform');
             ground.create(191, 47, 'platform');
-            ground.create(206, 41, 'platform');
-            ground.create(216, 41, 'platform');
-            ground.create(235, 53, 'platform');
+            ground.create(210, 41, 'platform');
+            ground.create(220, 41, 'platform');
+            ground.create(240, 53, 'platform');
+
+            //load goal marker
+            goal = this.physics.add.staticGroup();
+            goal.create(366, 53, 'flag');
+
 
 
             //load in player
@@ -108,8 +123,51 @@
             player.setBounce(0.2);
             playerSpeed = 25;
 
+            //load in weapon
+            class Pick extends Phaser.Physics.Arcade.Sprite{
+              constructor (scene, x, y){
+                super(scene, x, y, 'pick')
+              }
+              fire (x, y){
+                this.body.reset(x,y);
+                this.setActive(true);
+                this.setVisible(true);
+                this.setVelocity(55, -65);
+              }
+              preUpdate (time, delta){
+                super.preUpdate(time, delta);
+                if (this.x >= camera.worldView.right + 15){
+                  this.setActive(false);
+                  this.setVisible(false);
+                }
+              }
+            }
+            class Picks extends Phaser.Physics.Arcade.Group{
+              constructor(scene){
+                super(scene.physics.world, scene);
+                this.createMultiple({
+                  frameQuantity: 3,
+                  key: 'pick',
+                  active: false,
+                  visible: false,
+                  classType: Pick
+                });
+              }
+              firePick (x, y) {
+                let pick = this.getFirstDead(false);
+                if (pick){
+                  pick.fire(x, y);
+                }
+              }
+            }
+
+            this.picks = new Picks(this)
+            this.physics.add.collider(this.picks, ground, touchPick, null, this);
+
             //set player collisions
             this.physics.add.collider(player, ground);
+            this.physics.add.collider(player, lavaTrap, touchLava, null, this);
+            this.physics.add.collider(player, goal, touchGoal, null, this);
 
             //set player animations
             this.anims.create({
@@ -135,16 +193,20 @@
 
             //set up keyboard inputs
             cursors = this.input.keyboard.createCursorKeys();
+            spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
         }
 
         function update ()
           {
-            if (gameOver == true) {
-              return
+            if (gameOver === true) {
+              if (cursors.space.isDown) {
+                  this.scene.restart();
+                  gameOver = false;
+              }
             }
             viewportLeft = camera.worldView.left;
             viewportTop = camera.worldView.top;
-            camera.deadzone = new Phaser.Geom.Rectangle(0, 0, 8, 8);
+            camera.deadzone = new Phaser.Geom.Rectangle(0, 0, 3, 8);
             if (cursors.left.isDown){
                 player.anims.play('left', true);
                 if(player.x-5 > viewportLeft) {
@@ -165,9 +227,35 @@
             if (cursors.up.isDown && player.body.touching.down){
                 player.setVelocityY(-60);
             }
+            if (Phaser.Input.Keyboard.JustDown(spacebar)){
+                this.picks.firePick(player.x, player.y)
+            }
 
           }
 
+          function touchPick(pick, ground){
+            pick.setActive(false);
+            pick.setVisible(false);
+          }
+
+          function touchLava(player, lavaTrap){
+              gameOver = true;
+              this.physics.pause();
+              player.setTint(0xff0000);
+              player.anims.play('turn');
+              camera.shake(200);
+              this.add.text(viewportLeft + 15, 5, 'Game\nOver', { fontFamily: '"Roboto Condensed"', fontSize: '14px' });
+              this.add.text(viewportLeft + 13, 35, 'Press Space\nto try again', { fontFamily: '"Roboto Condensed"', fontSize: '9px' });
+          }
+
+          function touchGoal(player, goal){
+            gameOver = true;
+            this.physics.pause();
+            player.setTint(0x31f53e);
+            player.anims.play('turn');
+            this.add.text(viewportLeft + 15, 5, 'You\nWin!', { fontFamily: '"Roboto Condensed"', fontSize: '14px' });
+            this.add.text(viewportLeft + 13, 35, 'Press Space\nstart again', { fontFamily: '"Roboto Condensed"', fontSize: '9px' });
+          }
 
       </script>
     </div>
