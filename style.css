@@ -9,4 +9,12 @@ header {
   width: 50%;
   margin: auto;
   padding: 15px;
+  font-size: 1.2em;
+}
+
+footer {
+  padding: 15px;
+  position: fixed;
+  bottom: 0px;
+  display: inline-block;
 }
