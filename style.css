@@ -8,13 +8,15 @@ header {
   text-align: center;
   width: 50%;
   margin: auto;
-  padding: 15px;
   font-size: 1.2em;
+}
+
+h2{
+  padding: 15px;
 }
 
 footer {
   padding: 15px;
-  position: fixed;
   bottom: 0px;
   display: inline-block;
 }

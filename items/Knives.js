@@ -6,7 +6,7 @@ class Knife extends Phaser.Physics.Arcade.Sprite{
     this.body.reset(x,y);
     this.setActive(true);
     this.setVisible(true);
-    this.setVelocity(-45, 0);
+    this.setVelocity(-50, 0);
   }
   preUpdate (time, delta){
     super.preUpdate(time, delta);

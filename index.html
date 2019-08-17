@@ -9,11 +9,12 @@
   <body>
 
     <header>
-      <h1>Dungeon Adventure</h1>
+      <h2>Dungeon Adventure</h1>
       <h4>Game Controls</h4>
       <p>Left and Right Arrows to Move</p>
       <p>Up Arrow to Jump</p>
       <p>Space to Throw Pickaxe</p>
+      <h3>Level <span id='level'>__</span> </h3>
     </header>
 
     <div id="game_window">
@@ -21,9 +22,13 @@
     </div>
 
     <footer>
-      <audio src='./assets/dungeon.wav' autoplay loop controls></audio>
-      <p>Music and sounds by LittleRobotSoundFactory<p>
-      <p>Can by found on https://freesound.org/people/LittleRobotSoundFactory/</p>
+      <audio id="myaudio" src='./assets/dungeon_background.wav' hidden loop volume="0.2" autoplay></audio>
+      <script>
+        let audio = document.getElementById('myaudio');
+        audio.volume = 0.3;
+      </script>
+      <p>Music by julius_galla and sounds by LittleRobotSoundFactory and InspectorJ (www.jshaw.co.uk)<p>
+      <p>All audio can be found on https://freesound.org/</p>
     </footer>
   </body>
 

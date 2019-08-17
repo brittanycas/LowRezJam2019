@@ -2,6 +2,7 @@ import Picks from '../items/Pick.js'
 import Knives from '../items/Knives.js'
 
 var gameOver = false;
+var levelComplete = false;
 var lastTime = 0;
 var movementTimer = 0;
 var playerSpeed = 28;
@@ -22,7 +23,11 @@ class LevelOne extends Phaser.Scene {
     this.load.image('lava-lg', 'assets/lava-lg.png');
     this.load.image('flag', 'assets/flag.png');
     this.load.image('pick', 'assets/pick.png');
+    this.load.audio('lose', 'assets/lose.wav');
+    this.load.audio('win', 'assets/win.wav');
+    this.load.audio('walk', 'assets/footsteps.wav');
     this.load.audio('stab', 'assets/stab-knife.wav');
+    this.load.audio('pickdrop', 'assets/pickdrop.wav');
     this.load.spritesheet('badguy', 'assets/badskellsprite.png',
         { frameWidth: 7, frameHeight: 16});
     this.load.image('knife', 'assets/knife.png')
@@ -35,6 +40,7 @@ class LevelOne extends Phaser.Scene {
     //set up world and camera
     this.physics.world.setBounds(0, 0, 384, 64);
     this.cameras.main.setBounds(0, 0, 384, 64);
+    document.getElementById('level').innerHTML = "1"
 
     this.add.image(0, 0, 'background').setOrigin(0);
 
@@ -50,7 +56,7 @@ class LevelOne extends Phaser.Scene {
 
     //load in static ground
     var ground = this.physics.add.staticGroup();
-    ground.create(43, 62, 'ground');
+    ground.create(42, 62, 'ground');
     ground.create(114, 62, 'ground-sm');
     ground.create(145, 62, 'ground-sm');
     ground.create(150, 62, 'ground-sm');
@@ -60,7 +66,7 @@ class LevelOne extends Phaser.Scene {
     ground.create(364, 62, 'goal-platform');
 
     //load floating platforms
-    ground.create(85, 56, 'platform');
+    ground.create(84, 56, 'platform');
     ground.create(174, 54, 'platform');
     ground.create(191, 47, 'platform');
     ground.create(210, 41, 'platform');
@@ -116,7 +122,7 @@ class LevelOne extends Phaser.Scene {
     this.physics.add.collider(this.player, ground);
     this.physics.add.collider(this.player, lavaTrap, gameLost, null, this);
     this.physics.add.collider(this.player, goal, touchGoal, null, this);
-    this.physics.add.collider(this.player, badguy, gameLost, null, this);
+    this.physics.add.collider(this.player, this.enemies, gameLost, null, this);
     this.physics.add.collider(this.player, this.knives, gameLost, null, this);
 
     //set player animations
@@ -138,6 +144,10 @@ class LevelOne extends Phaser.Scene {
         repeat: -1
     });
 
+    this.walking = this.sound.add('walk', {loop: true});
+    this.walking.play();
+    this.walking.pause();
+
     //set camera to follow player
     this.cameras.main.startFollow(this.player, true, 0.1);
 
@@ -147,85 +157,111 @@ class LevelOne extends Phaser.Scene {
   }
 
   update(time){
-    if (gameOver === true) {
-        if (this.cursors.space.isDown) {
-          this.scene.restart();
-          gameOver = false;
+    if(levelComplete === true){
+      if (Phaser.Input.Keyboard.JustDown(this.spacebar)){
+          levelComplete = false;
+          this.scene.start('LevelTwo');
       }
-  }
-  let viewportLeft = this.cameras.main.worldView.left;
-  let viewportTop = this.cameras.main.worldView.top;
-  this.cameras.main.deadzone = new Phaser.Geom.Rectangle(0, 0, 4, 8);
+    }
+    let viewportLeft = this.cameras.main.worldView.left;
+    let viewportTop = this.cameras.main.worldView.top;
+    this.cameras.main.deadzone = new Phaser.Geom.Rectangle(0, 0, 4, 8);
 
-  //Enemy movement
-  if(Math.floor(time / 2000) > lastTime){
-    this.enemies.forEach(el => {
-      if(el.active === true){
-        this.knives.fireKnife(el.x, el.y);
-        el.anims.play('fire');
+    //Enemy movement
+    if(Math.floor(time / 2000) > lastTime){
+      this.enemies.forEach(el => {
+        if(el.active === true){
+          this.knives.fireKnife(el.x, el.y);
+          el.anims.play('fire');
+          }
+        })
+      lastTime = Math.floor(time / 2000);
+    }
+
+    if((Math.round((time + 300)/ 2000) - lastTime)  > movementTimer){
+      this.enemies.forEach(function(el){
+        if(el.active === true){
+          el.anims.play('stand');
+          }
+        })
+    }
+
+    //Player movement
+    if (this.cursors.left.isDown){
+      if(this.player.x-5 > 0) {
+            this.player.setVelocityX(-playerSpeed);
+            this.player.anims.play('left', true);
+            if(this.walking.isPaused){
+              this.walking.resume();
+            }
         }
-      })
-    lastTime = Math.floor(time / 2000);
-  }
-
-  if((Math.round((time + 300)/ 2000) - lastTime)  > movementTimer){
-    this.enemies.forEach(function(el){
-      if(el.active === true){
-        el.anims.play('stand');
+        else {
+          this.player.setVelocityX(0);
+          this.player.anims.play('left', true);
+          if(this.walking.isPaused){
+            this.player.x = 5;
+            this.player.y = 50;
+            this.walking.resume();
+          }
         }
-      })
-  }
-
-  //Player movement
-  if (this.cursors.left.isDown){
-      this.player.anims.play('left', true);
-      if(this.player.x-5 > viewportLeft) {
-          this.player.setVelocityX(-playerSpeed)
+    }
+    else if (this.cursors.right.isDown){
+      if(this.player.x < 8 && this.player.y > 58){
+        this.player.x = 5;
+        this.player.y = 50;
       }
-      else {
+        this.player.anims.play('right', true);
+        this.player.setVelocityX(playerSpeed);
+        if(this.walking.isPaused){
+          this.walking.resume();
+        }
+    }
+    else {
         this.player.setVelocityX(0);
-      }
+        this.walking.pause();
+        this.player.anims.play('turn');
+        }
+    if (this.cursors.up.isDown && this.player.body.touching.down){
+        this.walking.pause();
+        this.player.setVelocityY(playerJump);
+    }
+    if (Phaser.Input.Keyboard.JustDown(this.spacebar)){
+        this.picks.firePick(this.player.x, this.player.y);
+    }
   }
-  else if (this.cursors.right.isDown){
-      this.player.anims.play('right', true);
-      this.player.setVelocityX(playerSpeed);
-  }
-  else {
-      this.player.setVelocityX(0);
-      this.player.anims.play('turn');
-  }
-  if (this.cursors.up.isDown && this.player.body.touching.down){
-      this.player.setVelocityY(playerJump);
-  }
-  if (Phaser.Input.Keyboard.JustDown(this.spacebar)){
-      this.picks.firePick(this.player.x, this.player.y);
-  }
- }
 }
 
 function touchGround(pick, ground){
   pick.setActive(false);
   pick.setVisible(false);
   pick.disableBody();
+  this.sound.add('pickdrop').play();
 }
 
 function gameLost(player, object){
+  if(object.active){
+  this.sound.add('lose').play()
   gameOver = true;
   this.physics.pause();
   player.setTint(0xff0000);
   player.anims.play('turn');
-  this.cameras.main.shake(200);
-  this.add.text(this.cameras.main.worldView.left + 15, 5, 'Game\nOver', { fontFamily: '"Roboto Condensed"', fontSize: '14px' });
-  this.add.text(this.cameras.main.worldView.left + 13, 35, 'Press Space\nto try again', { fontFamily: '"Roboto Condensed"', fontSize: '9px' });
+  this.time.addEvent({
+    delay: 100,
+    callback: () =>{
+      this.scene.start('GameOver');
+      }
+    })
+  }
 }
 
 function touchGoal(player, goal){
-  gameOver = true;
+  this.sound.add('win').play()
+  levelComplete = true;
   this.physics.pause();
   player.setTint(0x31f53e);
   player.anims.play('turn');
-  this.add.text(this.cameras.main.worldView.left + 15, 5, 'You\nWin!', { fontFamily: '"Roboto Condensed"', fontSize: '14px' });
-  this.add.text(this.cameras.main.worldView.left + 13, 35, 'Press Space\nstart again', { fontFamily: '"Roboto Condensed"', fontSize: '9px' });
+  this.add.text(this.cameras.main.worldView.left + 5, 5, 'Level\nComplete!', { fontFamily: '"Roboto Condensed"', fontSize: '14px' });
+  this.add.text(this.cameras.main.worldView.left + 11, 37, 'Press Space\nto continue', { fontFamily: '"Roboto Condensed"', fontSize: '8px' });
 }
 
 function killEnemy(badguy, pick){
