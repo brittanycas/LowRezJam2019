@@ -242,6 +242,7 @@ function gameLost(player, object){
   if(object.active){
   this.sound.add('lose').play()
   gameOver = true;
+  this.walking.pause();
   this.physics.pause();
   player.setTint(0xff0000);
   player.anims.play('turn');
@@ -258,6 +259,7 @@ function touchGoal(player, goal){
   this.sound.add('win').play()
   levelComplete = true;
   this.physics.pause();
+  this.walking.pause();
   player.setTint(0x31f53e);
   player.anims.play('turn');
   this.add.text(this.cameras.main.worldView.left + 5, 5, 'Level\nComplete!', { fontFamily: '"Roboto Condensed"', fontSize: '14px' });
