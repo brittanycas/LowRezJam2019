@@ -7,8 +7,6 @@ class TitleScreen extends Phaser.Scene{
   }
   create(){
     this.add.image(0, 0, 'title').setOrigin(0);
-    this.add.text(4, 5, 'Dungeon\nAdventure', { fontFamily: '"Roboto Condensed"', fontSize: '13px' });
-    this.add.text(13, 37, 'Press Space\nto start', { fontFamily: '"Roboto Condensed"', fontSize: '8px' });
   }
   update(){
     let cursors = this.input.keyboard.createCursorKeys();

@@ -3,12 +3,11 @@ class GameOver extends Phaser.Scene{
     super({key: 'GameOver'})
   }
   preload(){
-    this.load.image('title', 'assets/title.png');
+    this.load.image('gameover', 'assets/gameover.png');
   }
   create(){
     this.cameras.main.shake(200);
-    this.add.text(this.cameras.main.worldView.left + 15, 5, 'Game\nOver', { fontFamily: '"Roboto Condensed"', fontSize: '14px' });
-    this.add.text(this.cameras.main.worldView.left + 13, 35, 'Press Space\nto try again', { fontFamily: '"Roboto Condensed"', fontSize: '8px' })
+    this.add.image(0, 0, 'gameover').setOrigin(0)
   }
   update(){
     let cursors = this.input.keyboard.createCursorKeys();

@@ -20,3 +20,10 @@ footer {
   bottom: 0px;
   display: inline-block;
 }
+
+canvas {
+  image-rendering: crisp-edges;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  -ms-interpolation-mode: nearest-neighbor;
+}

@@ -11,6 +11,8 @@ var gameHeight = 64;
 var config = {
     type: Phaser.AUTO,
     parent: 'game_window',
+    pixelArt: true,
+    antialias: false,
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_HORIZONTALLY,
@@ -21,8 +23,8 @@ var config = {
         height: 64,
       },
       max: {
-        width: 512,
-        height: 512
+        width: 448,
+        height: 448
       }
     },
     scene:
@@ -40,6 +42,5 @@ var config = {
         }
     }
   };
-
 
   var game = new Phaser.Game(config);
